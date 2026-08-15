@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShapeView — Shapefile viewer</title>
+    <meta
+      name="description"
+      content="Client-side shapefile viewer. Files are parsed in your browser; nothing is uploaded."
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Stamp the theme before first paint, or a stored dark preference flashes light while the
+      // bundle loads. The key is duplicated from THEME_KEY in src/hooks/useTheme.ts on purpose —
+      // this has to run without importing anything.
+      try {
+        var stored = localStorage.getItem('shapeview:theme');
+        document.documentElement.dataset.theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+      } catch (e) {
+        /* storage blocked — useTheme sets it once React mounts */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

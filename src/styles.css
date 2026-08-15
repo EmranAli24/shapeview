@@ -1,0 +1,566 @@
+/* ShapeView — ported from the design prototype's <helmet> style block.
+   Everything the prototype expressed as style-hover="…" / style-focus="…" attributes
+   (which its preview runtime compiled into injected :hover rules) lives here as a
+   real rule on a semantic class.
+
+   Colours live here and nowhere else. Components reference var(--sv-…) from their inline
+   styles rather than hex literals, so the dark theme is one override block instead of a
+   prop threaded through every component. The exceptions are GEOM_COLORS and PALETTE in
+   constants.ts — those are layer symbology data, not chrome, and stay literal. */
+
+:root {
+  color-scheme: light;
+
+  --sv-bg: #f4f6f9;
+  --sv-surface: #ffffff;
+  --sv-surface-2: #f8fafc;
+  --sv-surface-3: #f7faff;
+  --sv-map-bg: #e9edf2;
+
+  --sv-border: #e6eaf0;
+  --sv-border-strong: #e2e7ef;
+  --sv-border-dashed: #d7dfeb;
+  --sv-border-faint: #f1f4f8;
+
+  --sv-text: #101828;
+  --sv-text-2: #344054;
+  --sv-text-3: #475467;
+  --sv-muted: #667085;
+  --sv-faint: #98a2b3;
+  --sv-fainter: #b3bcc9;
+  --sv-label: #8994a5;
+
+  --sv-accent: #2f6feb;
+  --sv-accent-hover: #1f57c9;
+  --sv-accent-soft: #eef3ff;
+  --sv-accent-border: #c9dbff;
+  --sv-accent-glow: rgba(47, 111, 235, 0.25);
+
+  --sv-float: rgba(255, 255, 255, 0.95);
+  --sv-shadow: rgba(16, 24, 40, 0.13);
+  --sv-shadow-soft: rgba(16, 24, 40, 0.04);
+  --sv-scrim: rgba(16, 24, 40, 0.35);
+
+  --sv-row: #ffffff;
+  --sv-row-alt: #fbfcfe;
+
+  --sv-err-bg: #fef3f2;
+  --sv-err-border: #fbd3d3;
+  --sv-err-title: #b42318;
+  --sv-err-body: #a4534b;
+  --sv-err-dot: #e04f4f;
+
+  --sv-warn-bg: #fffaf0;
+  --sv-warn-border: #fce7bd;
+  --sv-warn-title: #96620d;
+  --sv-warn-body: #9a7238;
+  --sv-warn-dot: #e8a13a;
+
+  --sv-load-bg: #f7faff;
+  --sv-load-border: #dfe7f5;
+  --sv-load-track: #e2ebfb;
+  --sv-load-ring: #d6e3fb;
+
+  --sv-scroll-thumb: #d6dce6;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --sv-bg: #0f1319;
+  --sv-surface: #171b22;
+  --sv-surface-2: #1d222b;
+  --sv-surface-3: #1b2231;
+  --sv-map-bg: #12151b;
+
+  --sv-border: #262c36;
+  --sv-border-strong: #2f3742;
+  --sv-border-dashed: #39424f;
+  --sv-border-faint: #21262f;
+
+  --sv-text: #e7ebf2;
+  --sv-text-2: #c6cedb;
+  --sv-text-3: #aab4c2;
+  --sv-muted: #8b95a5;
+  --sv-faint: #727d8d;
+  --sv-fainter: #5c6675;
+  --sv-label: #7b8698;
+
+  --sv-accent: #5b8dff;
+  --sv-accent-hover: #7ba3ff;
+  --sv-accent-soft: rgba(91, 141, 255, 0.14);
+  --sv-accent-border: #2f4373;
+  --sv-accent-glow: rgba(91, 141, 255, 0.28);
+
+  --sv-float: rgba(23, 27, 34, 0.93);
+  --sv-shadow: rgba(0, 0, 0, 0.55);
+  --sv-shadow-soft: rgba(0, 0, 0, 0.3);
+  --sv-scrim: rgba(0, 0, 0, 0.55);
+
+  --sv-row: #171b22;
+  --sv-row-alt: #1b2028;
+
+  --sv-err-bg: rgba(224, 79, 79, 0.12);
+  --sv-err-border: rgba(224, 79, 79, 0.34);
+  --sv-err-title: #ff9c94;
+  --sv-err-body: #d9a6a1;
+  --sv-err-dot: #e04f4f;
+
+  --sv-warn-bg: rgba(232, 161, 58, 0.12);
+  --sv-warn-border: rgba(232, 161, 58, 0.32);
+  --sv-warn-title: #f0bc6a;
+  --sv-warn-body: #d1ae7c;
+  --sv-warn-dot: #e8a13a;
+
+  --sv-load-bg: rgba(91, 141, 255, 0.09);
+  --sv-load-border: rgba(91, 141, 255, 0.26);
+  --sv-load-track: rgba(91, 141, 255, 0.2);
+  --sv-load-ring: #2f4373;
+
+  --sv-scroll-thumb: #333b47;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--sv-bg);
+  color: var(--sv-text);
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+}
+
+.sv-h {
+  font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+}
+
+.sv-m {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--sv-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--sv-accent-hover);
+  text-decoration: underline;
+}
+
+input[type='range'] {
+  accent-color: var(--sv-accent);
+}
+
+input[type='color'] {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+button {
+  font-family: inherit;
+}
+
+@keyframes sv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sv-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sv-scroll-thumb);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- Leaflet overrides ---------- */
+
+.leaflet-container {
+  font-family: inherit;
+  background: var(--sv-map-bg);
+}
+
+/* Lift the attribution clear of our own status bar. */
+.leaflet-bottom {
+  margin-bottom: 31px;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 600;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+.leaflet-control-zoom a {
+  border-radius: 8px !important;
+  color: var(--sv-text-2) !important;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.leaflet-bar {
+  border: 1px solid var(--sv-border-strong) !important;
+  box-shadow: 0 4px 14px var(--sv-shadow) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+/* Leaflet's own stylesheet hardcodes white for its controls, so the dark theme has to
+   out-specify it rather than rely on the tokens above. */
+:root[data-theme='dark'] .leaflet-control-zoom a {
+  background: var(--sv-surface) !important;
+  border-bottom-color: var(--sv-border) !important;
+}
+
+:root[data-theme='dark'] .leaflet-control-zoom a:hover {
+  background: var(--sv-surface-2) !important;
+  color: var(--sv-accent) !important;
+}
+
+:root[data-theme='dark'] .leaflet-control-zoom a.leaflet-disabled {
+  background: var(--sv-surface-2) !important;
+  color: var(--sv-fainter) !important;
+}
+
+:root[data-theme='dark'] .leaflet-control-attribution {
+  background: var(--sv-float) !important;
+  color: var(--sv-faint) !important;
+}
+
+:root[data-theme='dark'] .leaflet-control-attribution a {
+  color: var(--sv-accent) !important;
+}
+
+/* ---------- shared button base ---------- */
+
+.sv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  padding: 8px 14px;
+}
+
+/* ---------- header ---------- */
+
+.sv-menu-btn {
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--sv-border-strong);
+  background: var(--sv-surface);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.sv-menu-btn:hover {
+  background: var(--sv-accent-soft);
+  border-color: var(--sv-accent-border);
+}
+
+/* The "Group 08" chip, which opens the team dialog. */
+.sv-badge-btn {
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.sv-badge-btn:hover {
+  border-color: var(--sv-accent);
+  filter: brightness(1.04);
+}
+
+/* Square icon button matching the height of the text buttons beside it. */
+.sv-btn-icon {
+  flex: none;
+  width: 34px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sv-btn-ghost {
+  border: 1px solid var(--sv-border-strong);
+  background: var(--sv-surface);
+  color: var(--sv-text-2);
+}
+
+.sv-btn-ghost:hover {
+  background: var(--sv-accent-soft);
+  border-color: var(--sv-accent-border);
+  color: var(--sv-accent);
+}
+
+.sv-btn-primary {
+  border: 1px solid var(--sv-accent);
+  background: var(--sv-accent);
+  color: #ffffff;
+  box-shadow: 0 3px 10px var(--sv-accent-glow);
+  white-space: nowrap;
+}
+
+.sv-btn-primary:hover {
+  background: var(--sv-accent-hover);
+  border-color: var(--sv-accent-hover);
+}
+
+.sv-btn-primary:disabled,
+.sv-btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sv-btn-primary:disabled:hover {
+  background: var(--sv-accent);
+  border-color: var(--sv-accent);
+}
+
+.sv-btn-ghost:disabled:hover {
+  background: var(--sv-surface);
+  border-color: var(--sv-border-strong);
+  color: var(--sv-text-2);
+}
+
+/* ---------- sidebar: add data ---------- */
+
+.sv-btn-sample {
+  border: 1px dashed var(--sv-border-dashed);
+  background: var(--sv-surface);
+  color: var(--sv-text-3);
+  width: 100%;
+}
+
+.sv-btn-sample:hover {
+  background: var(--sv-accent-soft);
+  border-color: var(--sv-accent-border);
+  color: var(--sv-accent);
+}
+
+.sv-btn-cta {
+  border: 1px solid var(--sv-accent);
+  background: var(--sv-accent);
+  color: #ffffff;
+  box-shadow: 0 3px 10px var(--sv-accent-glow);
+  white-space: nowrap;
+  margin-top: 14px;
+}
+
+.sv-btn-cta:hover {
+  background: var(--sv-accent-hover);
+  border-color: var(--sv-accent-hover);
+}
+
+/* ---------- layer cards ---------- */
+
+.sv-btn-mini {
+  white-space: nowrap;
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--sv-border);
+  background: var(--sv-surface);
+  color: var(--sv-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.sv-btn-mini:hover {
+  background: var(--sv-accent-soft);
+  color: var(--sv-accent);
+  border-color: var(--sv-accent-border);
+}
+
+.sv-btn-mini:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sv-btn-mini:disabled:hover {
+  background: var(--sv-surface);
+  color: var(--sv-muted);
+  border-color: var(--sv-border);
+}
+
+.sv-btn-remove {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--sv-faint);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 3px;
+  transition: color 0.16s ease;
+}
+
+.sv-btn-remove:hover {
+  color: var(--sv-err-title);
+}
+
+/* ---------- attribute table ---------- */
+
+.sv-chev {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid var(--sv-border-strong);
+  background: var(--sv-surface);
+  color: var(--sv-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: all 0.18s ease;
+}
+
+.sv-chev:hover {
+  background: var(--sv-accent-soft);
+  border-color: var(--sv-accent-border);
+}
+
+.sv-search {
+  width: 210px;
+  max-width: 42vw;
+  padding: 7px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--sv-border-strong);
+  background: var(--sv-surface-2);
+  color: var(--sv-text);
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.16s ease;
+}
+
+.sv-search::placeholder {
+  color: var(--sv-faint);
+}
+
+.sv-search:focus {
+  border-color: var(--sv-accent);
+  background: var(--sv-surface);
+}
+
+.sv-th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--sv-surface-2);
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--sv-border);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sv-td {
+  font-size: 11px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--sv-border-faint);
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sv-row {
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+/* ---------- measurement ---------- */
+
+/* Leaflet puts .leaflet-grab on the container, so this has to out-specify it. */
+.leaflet-container.sv-measuring,
+.leaflet-container.sv-measuring .leaflet-grab,
+.leaflet-container.sv-measuring .leaflet-interactive {
+  cursor: crosshair;
+}
+
+.sv-unit {
+  width: 100%;
+  padding: 5px 7px;
+  border-radius: 8px;
+  border: 1px solid var(--sv-border-strong);
+  background: var(--sv-surface);
+  color: var(--sv-text-2);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.16s ease;
+}
+
+.sv-unit:hover {
+  border-color: var(--sv-accent-border);
+}
+
+.sv-unit:focus {
+  border-color: var(--sv-accent);
+}
+
+/* ---------- misc ---------- */
+
+.sv-error-dismiss {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--sv-err-title);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.sv-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--sv-label);
+  text-transform: uppercase;
+}
