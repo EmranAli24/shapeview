@@ -6,6 +6,26 @@ and there is no backend. Builds to static files.
 Built for CSE 618 — Geographic Information System Lab, University of Chittagong (Group 08),
 from the ShapeView design prototype.
 
+**Live demo:** https://shape-view-csecu.netlify.app/
+
+## Team & credits
+
+A Group 08 team project. The bundled sample (`Group08_Station`) holds 20 landmarks the team
+surveyed by GPS around the Shuttle Train Station area of the University of Chittagong.
+
+- Md. Abdullah Al Mamun Emon
+- Emran Ali
+- Saad Al Mahmud
+- Md Faysal Ahmed Fahim
+- Omar Faruk
+
+Course teacher: Professor Rashed Mustafa, Ph.D., Department of Computer Science and Engineering,
+University of Chittagong.
+
+This repository holds the web app from the group's lab repository
+([emon4075/GIS-Lab](https://github.com/emon4075/GIS-Lab/tree/master/Task%2002%20-%20Web%20App)),
+with its original commit history kept.
+
 ## Features
 
 - **Load** a zipped shapefile, or loose `.shp` + `.shx` + `.dbf` (+ `.prj`, `.cpg`) files, by
@@ -77,9 +97,8 @@ public/sample/            bundled Group08_Station shapefile
 
 ## Team details
 
-`src/team.ts` holds the group label, the course line and the member roster. It ships with
-placeholder rows (`Member One` / `00000000`) — replace them with the real names and student IDs.
-Nothing else needs changing; the dialog sizes itself to however many rows are listed, and the
+`src/team.ts` holds the group label, the course line and the member roster shown in the app's
+team dialog. To change the roster, edit only that file. Nothing else needs changing; the dialog sizes itself to however many rows are listed, and the
 footer and header badge read the course and group strings from the same file.
 
 ## Theming
