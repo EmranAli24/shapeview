@@ -7,7 +7,7 @@ browser. There is no backend and no file is uploaded anywhere.
 It was built for **CSE 618 (Geographic Information System Lab)**, Department of Computer Science
 and Engineering, University of Chittagong, by Group 08.
 
-**Live demo:** https://shape-view-csecu.netlify.app/
+**Live demo:** https://shape-view-shuttle-station.netlify.app/
 
 ## Features
 
