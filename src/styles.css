@@ -1,12 +1,4 @@
-/* ShapeView — ported from the design prototype's <helmet> style block.
-   Everything the prototype expressed as style-hover="…" / style-focus="…" attributes
-   (which its preview runtime compiled into injected :hover rules) lives here as a
-   real rule on a semantic class.
-
-   Colours live here and nowhere else. Components reference var(--sv-…) from their inline
-   styles rather than hex literals, so the dark theme is one override block instead of a
-   prop threaded through every component. The exceptions are GEOM_COLORS and PALETTE in
-   constants.ts — those are layer symbology data, not chrome, and stay literal. */
+/* ShapeView styles: theme tokens, hover/focus rules and Leaflet overrides */
 
 :root {
   color-scheme: light;
@@ -236,8 +228,7 @@ button {
   overflow: hidden;
 }
 
-/* Leaflet's own stylesheet hardcodes white for its controls, so the dark theme has to
-   out-specify it rather than rely on the tokens above. */
+/* Leaflet hardcodes white for its controls, so dark mode needs !important */
 :root[data-theme='dark'] .leaflet-control-zoom a {
   background: var(--sv-surface) !important;
   border-bottom-color: var(--sv-border) !important;

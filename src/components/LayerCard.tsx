@@ -4,7 +4,6 @@ import type { Layer } from '../types';
 interface LayerCardProps {
   layer: Layer;
   active: boolean;
-  /** Position in the list, for enabling/disabling the reorder buttons. */
   index: number;
   total: number;
   onActivate: () => void;
@@ -104,7 +103,6 @@ export function LayerCard({
               background: GEOM_COLORS[type] || GEOM_COLORS.Unknown,
             }}
           >
-            {/* "×" so the number cannot be read as a shape type code. */}
             {type} × {layer.counts[type]}
           </span>
         ))}

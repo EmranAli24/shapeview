@@ -76,7 +76,6 @@ function UnitSelect({
   );
 }
 
-/** The measurement readout, floating clear of Leaflet's zoom control. */
 export function MeasurePanel(props: MeasurePanelProps) {
   const { tool, result } = props;
 

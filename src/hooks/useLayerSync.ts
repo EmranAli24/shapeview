@@ -5,7 +5,6 @@ import type { Layer, Selection, ShapeFeature } from '../types';
 
 interface GroupEntry {
   group: L.GeoJSON;
-  /** __fid -> the Leaflet layer drawing it, so the table can address map features. */
   index: Record<number, L.Layer>;
   paneName: string;
   added: boolean;
@@ -13,7 +12,6 @@ interface GroupEntry {
 
 const FIT_OPTIONS: L.FitBoundsOptions = { padding: [40, 40], maxZoom: 17 };
 
-/** Selected features darken, thicken and lift above their neighbours. */
 function styleFor(layer: Layer, selected: boolean): L.PathOptions {
   const { style } = layer;
   return {
@@ -26,9 +24,7 @@ function styleFor(layer: Layer, selected: boolean): L.PathOptions {
 }
 
 export interface UseLayerSyncResult {
-  /** Fit the map to one layer's extent. */
   zoomToLayer: (layerId: string) => void;
-  /** Centre the map on a single feature — used when a table row is clicked. */
   zoomToFeature: (layerId: string, fid: number) => void;
 }
 
@@ -49,13 +45,11 @@ export function useLayerSync(
 
     const live = new Set(layers.map((l) => l.id));
 
-    // Drop layers the user removed. Leaflet has no removePane(), so the pane element has to
-    // go manually or every add/remove cycle leaves an empty div behind. Pane names embed the
-    // layer id, so a detached pane can never be looked up again.
     for (const id of Object.keys(groups.current)) {
       if (!live.has(id)) {
         const entry = groups.current[id];
         map.removeLayer(entry.group);
+        // Leaflet has no removePane(), so remove the element ourselves
         map.getPane(entry.paneName)?.remove();
         delete groups.current[id];
       }
@@ -78,7 +72,6 @@ export function useLayerSync(
             const fid = (feature as ShapeFeature).__fid;
             featureIndex[fid] = leafletLayer;
             leafletLayer.on('click', (e: L.LeafletMouseEvent) => {
-              // Otherwise the map's own click handler immediately clears the selection.
               if (e && e.originalEvent) L.DomEvent.stopPropagation(e);
               selectRef.current(layer.id, fid);
             });
@@ -89,7 +82,6 @@ export function useLayerSync(
         pendingFit.current = layer.id;
       }
 
-      // Sidebar order is top-to-bottom, so the first layer must paint last.
       const pane = map.getPane(entry.paneName);
       if (pane) pane.style.zIndex = String(500 + (layers.length - index));
 
@@ -114,7 +106,6 @@ export function useLayerSync(
       });
     });
 
-    // A newly added layer should frame itself.
     if (pendingFit.current && groups.current[pendingFit.current]) {
       const target = groups.current[pendingFit.current].group;
       pendingFit.current = null;
@@ -122,7 +113,6 @@ export function useLayerSync(
         const bounds = target.getBounds();
         if (bounds && bounds.isValid()) map.fitBounds(bounds, FIT_OPTIONS);
       } catch {
-        /* a layer with no drawable geometry has no bounds to fit */
       }
     }
   }, [map, layers, selected]);
@@ -134,7 +124,6 @@ export function useLayerSync(
       try {
         map.fitBounds(entry.group.getBounds(), FIT_OPTIONS);
       } catch {
-        /* nothing to zoom to */
       }
     },
     [map],

@@ -7,10 +7,8 @@ interface AboutDialogProps {
   onClose: () => void;
 }
 
-/** Group and team roster, opened from the header badge. */
 export function AboutDialog({ open, onClose }: AboutDialogProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
-  /** Whatever had focus when the dialog opened — usually the badge that opened it. */
   const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -38,7 +36,6 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        // Above the header (1200) and the narrow-viewport sidebar (1200).
         zIndex: 1400,
         display: 'flex',
         alignItems: 'center',
@@ -52,7 +49,6 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="sv-about-title"
-        // Clicks inside the card must not reach the backdrop's close handler.
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',

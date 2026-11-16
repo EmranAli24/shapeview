@@ -14,9 +14,7 @@
       rel="stylesheet"
     />
     <script>
-      // Stamp the theme before first paint, or a stored dark preference flashes light while the
-      // bundle loads. The key is duplicated from THEME_KEY in src/hooks/useTheme.ts on purpose —
-      // this has to run without importing anything.
+      // set the saved theme before first paint to avoid a flash (same key as useTheme.ts)
       try {
         var stored = localStorage.getItem('shapeview:theme');
         document.documentElement.dataset.theme =

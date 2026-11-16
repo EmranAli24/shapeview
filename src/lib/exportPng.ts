@@ -5,30 +5,20 @@ import { download } from './exportGeoJSON';
 const BAR_HEIGHT = 28;
 const PIXEL_RATIO = 2;
 
-/** Caption-bar palette per UI theme, mirroring the --sv-* tokens in styles.css. */
 const CAPTION_COLORS: Record<Theme, { bar: string; rule: string; left: string; right: string }> = {
   light: { bar: '#ffffff', rule: '#e6eaf0', left: '#475467', right: '#667085' },
   dark: { bar: '#171b22', rule: '#262c36', left: '#c6cedb', right: '#8b95a5' },
 };
 
 export interface PngExportOptions {
-  /** Name of the active layer, shown at the left of the info bar. */
   layerName: string | null;
   zoom: number;
   scaleLabel: string;
-  /** Raw Leaflet attribution HTML for the current basemap. */
   attribution: string;
-  /** Whether the basemap *tiles* are dark — sets the backdrop tiles are drawn over. */
   darkBasemap: boolean;
-  /** The app's UI theme, which the caption bar follows. Independent of the basemap. */
   theme: Theme;
 }
 
-/**
- * Leaflet keeps painting tiles as they arrive, so capturing immediately produces a map full
- * of holes. Poll until every tile img has decoded, with a ceiling so a dead CDN cannot hang
- * the export forever.
- */
 function waitForTiles(element: HTMLElement, timeoutMs = 8000): Promise<void> {
   return new Promise((resolve) => {
     const started = Date.now();
@@ -42,7 +32,6 @@ function waitForTiles(element: HTMLElement, timeoutMs = 8000): Promise<void> {
   });
 }
 
-/** Leaflet's attribution is HTML; the canvas bar needs plain text. */
 function attributionText(html: string): string {
   const el = document.createElement('textarea');
   el.innerHTML = html.replace(/<[^>]+>/g, '');
@@ -59,10 +48,6 @@ function clipToWidth(ctx: CanvasRenderingContext2D, text: string, maxWidth: numb
   return clipped + '…';
 }
 
-/**
- * Capture the Leaflet container and append the design's caption bar (layer, zoom, scale,
- * basemap attribution), then download it as a PNG.
- */
 export async function exportMapPng(
   mapElement: HTMLElement,
   options: PngExportOptions,
@@ -78,7 +63,6 @@ export async function exportMapPng(
   const background = options.darkBasemap ? '#1a1c22' : '#e9edf2';
   const caption = CAPTION_COLORS[options.theme];
 
-  // Pulled in on first export rather than at startup.
   const { toCanvas } = await import('html-to-image');
 
   let mapCanvas: HTMLCanvasElement;
@@ -86,10 +70,7 @@ export async function exportMapPng(
     mapCanvas = await toCanvas(mapElement, {
       pixelRatio: PIXEL_RATIO,
       backgroundColor: background,
-      // Google Fonts is cross-origin; trying to inline it stalls the capture for no gain.
       skipFonts: true,
-      // The zoom buttons and the attribution control are chrome, not map — the bar below
-      // carries the attribution instead, matching the design's exported image.
       filter: (node) =>
         !(node instanceof Element && node.classList.contains('leaflet-control-container')),
     });
@@ -117,7 +98,6 @@ export async function exportMapPng(
   ctx.fillRect(0, 0, width, height + BAR_HEIGHT);
   ctx.drawImage(mapCanvas, 0, 0, width, height);
 
-  // Caption bar.
   ctx.fillStyle = caption.bar;
   ctx.fillRect(0, height, width, BAR_HEIGHT);
   ctx.fillStyle = caption.rule;

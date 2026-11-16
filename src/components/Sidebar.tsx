@@ -61,7 +61,6 @@ export function Sidebar(props: SidebarProps) {
   return (
     <aside style={asideStyle}>
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* ---------- 01 / Add data ---------- */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className={sectionLabel}>01 / Add data</div>
 
@@ -168,7 +167,6 @@ export function Sidebar(props: SidebarProps) {
           </button>
         </section>
 
-        {/* ---------- status ---------- */}
         {props.error && (
           <div
             style={{
@@ -321,7 +319,6 @@ export function Sidebar(props: SidebarProps) {
           </div>
         )}
 
-        {/* ---------- 02 / Layers ---------- */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
             <div className={sectionLabel}>02 / Layers</div>
@@ -361,7 +358,6 @@ export function Sidebar(props: SidebarProps) {
           ))}
         </section>
 
-        {/* ---------- 03 / Symbology + 04 / Metadata ---------- */}
         {props.activeLayer && (
           <>
             <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -9,7 +9,6 @@ interface StatusBarProps {
   crsChip: string;
 }
 
-/** The monospace readout strip along the bottom edge of the map. */
 export function StatusBar({ cursor, zoom, scalePx, scaleLabel, crsChip }: StatusBarProps) {
   return (
     <div

@@ -1,7 +1,3 @@
-/**
- * An error with the two-line presentation the sidebar's error card expects:
- * a short bold title and an explanatory sentence the user can act on.
- */
 export class AppError extends Error {
   title: string;
 

@@ -18,11 +18,9 @@ import { readShapeType, type ShapeTypeInfo } from './shapeType';
 
 export interface LoadOptions {
   onProgress: ProgressFn;
-  /** Palette index for the first layer produced; further layers advance from here. */
   paletteStart: number;
 }
 
-/** Mutable accumulator shared across the layers produced by one drop. */
 interface LoadContext {
   onProgress: ProgressFn;
   paletteIndex: number;
@@ -41,7 +39,6 @@ function readFileBuffer(file: File, onProgress: ProgressFn): Promise<ArrayBuffer
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onprogress = (ev) => {
-      // Reading is the first 45% of the bar; parsing takes it the rest of the way.
       if (ev.lengthComputable) void onProgress('Reading ' + file.name + '…', Math.round((ev.loaded / ev.total) * 45));
     };
     reader.onerror = () => reject(new Error('The file could not be read from disk.'));
@@ -49,8 +46,6 @@ function readFileBuffer(file: File, onProgress: ProgressFn): Promise<ArrayBuffer
     reader.readAsArrayBuffer(file);
   });
 }
-
-/* ------------------------------------------------------------------ layer build */
 
 function inferFieldTypes(features: ShapeFeature[]): Record<string, FieldType> {
   const fields: Record<string, FieldType> = {};
@@ -67,7 +62,6 @@ function inferFieldTypes(features: ShapeFeature[]): Record<string, FieldType> {
       else if (typeof value === 'boolean') type = 'Boolean';
       else if (value instanceof Date) type = 'Date';
 
-      // A column with mixed types is only safely displayable as text.
       if (!fields[key]) fields[key] = type;
       else if (fields[key] !== type) fields[key] = 'Text';
     }
@@ -98,7 +92,6 @@ function computeBbox(features: ShapeFeature[]): [number, number, number, number]
     try {
       walk((feature.geometry as unknown as { coordinates: unknown }).coordinates);
     } catch {
-      /* a malformed geometry should not sink the whole extent */
     }
   }
 
@@ -136,6 +129,7 @@ function buildLayer(
   }
 
   valid.forEach((f, i) => {
+    // __fid links map features to table rows
     f.__fid = i;
   });
 
@@ -153,8 +147,6 @@ function buildLayer(
     });
   }
 
-  // shpjs reprojects when it can read the .prj. When it could not, coordinates arrive still
-  // projected — metres, not degrees — which is easy to spot from the extent.
   let bbox = computeBbox(valid);
   if (bbox && !bboxLooksGeographic(bbox)) {
     if (crs.converter && reprojectToWgs84(geojson, crs.converter)) {
@@ -202,8 +194,6 @@ function buildLayer(
   });
 }
 
-/* ------------------------------------------------------------------ zip archives */
-
 async function loadZip(file: File, ctx: LoadContext): Promise<void> {
   await ctx.onProgress('Reading ' + file.name + '…', 5);
   const buffer = await readFileBuffer(file, ctx.onProgress);
@@ -213,7 +203,6 @@ async function loadZip(file: File, ctx: LoadContext): Promise<void> {
 
   await ctx.onProgress('Inspecting archive…', 52);
 
-  // Only the .zip path needs JSZip, so keep it out of the initial bundle.
   const { default: JSZipModule } = await import('jszip');
 
   let zip: JSZip;
@@ -262,8 +251,6 @@ async function loadZip(file: File, ctx: LoadContext): Promise<void> {
     }
   }
 
-  // shpjs's parseZip calls proj4(prj) without a try/catch, so an unreadable .prj would abort
-  // the whole load. Drop it from the archive and carry on unprojected instead.
   let payload: ArrayBuffer | Uint8Array = buffer;
   const crs = parseCrs(prjText);
   if (prjName && crs.unreadable) {
@@ -294,8 +281,6 @@ async function loadZip(file: File, ctx: LoadContext): Promise<void> {
   for (let i = 0; i < sets.length; i += 1) {
     const set = sets[i];
 
-    // Only the 100-byte header is wanted, but JSZip cannot inflate part of an entry, so this
-    // costs one extra decompression of the .shp. Archives here are small enough for that.
     const entry =
       shpEntries.find((n) => baseOf(n) === (set.fileName || '').toLowerCase()) ?? shpEntries[i];
     let shapeType: ShapeTypeInfo | null = null;
@@ -303,7 +288,6 @@ async function loadZip(file: File, ctx: LoadContext): Promise<void> {
       try {
         shapeType = readShapeType(await zip.file(entry)!.async('arraybuffer'));
       } catch {
-        /* the geometry already parsed; a missing header reading is not worth failing over */
       }
     }
 
@@ -317,8 +301,6 @@ async function loadZip(file: File, ctx: LoadContext): Promise<void> {
     );
   }
 }
-
-/* ------------------------------------------------------------------ loose files */
 
 async function loadLoose(files: File[], shpFiles: File[], ctx: LoadContext): Promise<void> {
   for (const shpFile of shpFiles) {
@@ -381,10 +363,6 @@ async function loadLoose(files: File[], shpFiles: File[], ctx: LoadContext): Pro
   }
 }
 
-/**
- * shpjs's object form parses .shp + .dbf in one call, honouring the .cpg codepage and
- * reprojecting via the .prj. Shared by the loose-file drop and the bundled sample.
- */
 async function parseParts(
   shpBuf: ArrayBuffer,
   dbfBuf: ArrayBuffer | undefined,
@@ -407,8 +385,6 @@ async function parseParts(
     );
   }
 }
-
-/* ------------------------------------------------------------------ entry points */
 
 export async function loadFromFiles(files: File[], options: LoadOptions): Promise<LoadResult> {
   const ctx: LoadContext = {
@@ -437,10 +413,6 @@ export async function loadFromFiles(files: File[], options: LoadOptions): Promis
   return { layers: ctx.layers, warnings: ctx.warnings };
 }
 
-/**
- * The bundled Group08_Station dataset, fetched and pushed through the exact same shpjs path
- * a dropped file takes — so the button demonstrates the real parser, not a canned object.
- */
 export async function loadSample(options: LoadOptions): Promise<LoadResult> {
   const ctx: LoadContext = {
     onProgress: options.onProgress,

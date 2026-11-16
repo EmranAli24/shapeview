@@ -16,8 +16,6 @@ export function LayerMetadata({ layer }: LayerMetadataProps) {
       layer.bbox[3].toFixed(4)
     : '—';
 
-  // Spell out that the number is a count of features. Written as "(N)" it reads like a shape
-  // type code, which is a different number entirely — hence the Shape type row below.
   const geometry = Object.keys(layer.counts)
     .map((type) => {
       const n = layer.counts[type];

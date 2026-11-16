@@ -4,20 +4,17 @@ import L from 'leaflet';
 import { BASEMAPS, DARK_BASEMAPS, HOME_VIEW } from '../constants';
 import type { BasemapKey, Cursor } from '../types';
 
-/** Scale-bar candidates, in metres. */
 const NICE_STEPS = [
   1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000, 10000, 25000, 50000, 100000, 250000,
   500000, 1000000,
 ];
 
-/** Graticule spacing candidates, in degrees. */
 const GRATICULE_STEPS = [10, 5, 2, 1, 0.5, 0.25, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002, 0.001];
 
 const MAX_SCALE_BAR_PX = 130;
 
 export interface MapReadout {
   zoom: number;
-  /** Pixel width of the scale bar. */
   scalePx: number;
   scaleLabel: string;
 }
@@ -27,7 +24,6 @@ export interface UseLeafletMapResult {
   map: L.Map | null;
   readout: MapReadout;
   cursor: Cursor | null;
-  /** Attribution HTML of the basemap currently displayed, for the PNG caption. */
   attribution: string;
   invalidateSoon: () => void;
 }
@@ -43,8 +39,6 @@ export function useLeafletMap(
   const gratLayer = useRef<L.LayerGroup | null>(null);
   const cursorRaf = useRef<number | null>(null);
 
-  // Read inside Leaflet event handlers, which are bound once and would otherwise close over
-  // the first render's values.
   const basemapRef = useRef(basemap);
   const graticuleRef = useRef(graticule);
   const backgroundClickRef = useRef(onBackgroundClick);
@@ -76,7 +70,6 @@ export function useLeafletMap(
       bounds.getNorth() - bounds.getSouth(),
     );
 
-    // Coarsest spacing that still yields at least three lines across the viewport.
     let step = GRATICULE_STEPS[GRATICULE_STEPS.length - 1];
     for (const candidate of GRATICULE_STEPS) {
       if (span / candidate >= 3) {
@@ -130,7 +123,6 @@ export function useLeafletMap(
     }
   };
 
-  /* ---------- init ---------- */
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
@@ -148,7 +140,6 @@ export function useLeafletMap(
 
     const refresh = () => {
       const center = instance.getCenter();
-      // Web Mercator ground resolution at this latitude and zoom.
       const metresPerPixel =
         (40075016.686 * Math.cos((center.lat * Math.PI) / 180)) / Math.pow(2, instance.getZoom() + 8);
 
@@ -167,8 +158,8 @@ export function useLeafletMap(
 
     instance.on('moveend zoomend', refresh);
     instance.on('mousemove', (e: L.LeafletMouseEvent) => {
-      // Pointer moves fire far faster than React can usefully re-render.
       if (cursorRaf.current !== null) return;
+      // throttle cursor readout to one update per frame
       cursorRaf.current = requestAnimationFrame(() => {
         cursorRaf.current = null;
         setCursor({ lat: e.latlng.lat, lng: e.latlng.lng });
@@ -180,7 +171,7 @@ export function useLeafletMap(
     refresh();
     setMap(instance);
 
-    // The container is still settling into the flex layout on first paint.
+    // wait for the flex layout to settle before resizing the map
     const settle = setTimeout(() => {
       instance.invalidateSize();
       refresh();
@@ -197,7 +188,6 @@ export function useLeafletMap(
     };
   }, []);
 
-  /* ---------- basemap ---------- */
   useEffect(() => {
     const instance = mapInstance.current;
     if (!instance) return;
@@ -215,11 +205,9 @@ export function useLeafletMap(
     baseTiles.current.addTo(instance);
     baseTiles.current.bringToBack();
 
-    // Graticule contrast depends on whether the basemap underneath is dark.
     drawGraticule.current();
   }, [basemap, map]);
 
-  /* ---------- graticule ---------- */
   useEffect(() => {
     drawGraticule.current();
   }, [graticule, map]);

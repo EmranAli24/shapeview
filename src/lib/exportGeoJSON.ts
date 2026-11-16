@@ -6,12 +6,12 @@ function download(blob: Blob, filename: string): void {
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
+  // free the blob URL after the download starts
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
 export { download };
 
-/** Write the active layer out as GeoJSON, stripping the internal __fid we added. */
 export function exportGeoJSON(layer: Layer): void {
   const clean = {
     type: 'FeatureCollection',

@@ -1,16 +1,4 @@
-/**
- * Geodesic measurement — distance, area and unit conversion.
- *
- * Both formulas treat the Earth as a sphere of the WGS 84 *mean* radius rather than as the
- * ellipsoid it is. That is a deliberate approximation: it keeps length and area consistent with
- * each other and the code short, at a cost well under 1% at these latitudes. ArcGIS and QGIS use
- * true ellipsoidal geodesics, so expect their figures to differ in the last digit or two.
- *
- * Pure functions only — no React and no Leaflet, so this file can be reasoned about (and checked
- * against a reference implementation) on its own.
- */
 
-/** WGS 84 mean radius, R₁ = (2a + b) / 3. */
 const R = 6371008.8;
 
 const D2R = Math.PI / 180;
@@ -20,11 +8,6 @@ export interface Point {
   lng: number;
 }
 
-/**
- * Great-circle distance in metres, by the haversine formula:
- *   a = sin²(Δφ/2) + cos φ₁ · cos φ₂ · sin²(Δλ/2)
- *   d = 2R · atan2(√a, √(1−a))
- */
 export function distance(a: Point, b: Point): number {
   const dLat = (b.lat - a.lat) * D2R;
   const dLng = (b.lng - a.lng) * D2R;
@@ -38,25 +21,17 @@ export function distance(a: Point, b: Point): number {
   return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-/** Total length of an open path. */
 export function pathLength(points: Point[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i += 1) total += distance(points[i - 1], points[i]);
   return total;
 }
 
-/** Length once around a ring — the path plus the segment closing it. */
 export function polygonPerimeter(points: Point[]): number {
   if (points.length < 3) return pathLength(points);
   return pathLength(points) + distance(points[points.length - 1], points[0]);
 }
 
-/**
- * Area of a spherical polygon in m², from the spherical-excess sum
- *   A = |Σ (λᵢ₊₁ − λᵢ)(2 + sin φᵢ + sin φᵢ₊₁)| · R²/2
- * taken over the closed ring. Self-intersecting rings are not meaningful here, and the absolute
- * value means winding order does not matter.
- */
 export function polygonArea(points: Point[]): number {
   const n = points.length;
   if (n < 3) return 0;
@@ -71,14 +46,10 @@ export function polygonArea(points: Point[]): number {
   return Math.abs((sum * R * R) / 2);
 }
 
-/* ------------------------------------------------------------------ units */
-
 export interface Unit {
   id: string;
   label: string;
-  /** Multiply the metric base (metres, or square metres) by this. */
   factor: number;
-  /** Digits after the point at everyday magnitudes. */
   decimals: number;
 }
 
@@ -103,10 +74,6 @@ function unitById(units: Unit[], id: string): Unit {
   return units.find((u) => u.id === id) ?? units[0];
 }
 
-/**
- * Group digits and keep the number readable across ten orders of magnitude: a value in the
- * millions does not need its hundredths, and one below 1 needs more than the unit's default.
- */
 function formatValue(value: number, unit: Unit): string {
   const magnitude = Math.abs(value);
   let decimals = unit.decimals;
@@ -130,7 +97,6 @@ export function formatArea(squareMetres: number, unitId: string): string {
   return formatValue(squareMetres * unit.factor, unit);
 }
 
-/** Short unit for the tooltip that follows the cursor, where the dropdown is not visible. */
 export function unitSuffix(units: Unit[], unitId: string): string {
   const map: Record<string, string> = {
     m: 'm',

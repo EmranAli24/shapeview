@@ -1,14 +1,3 @@
-/**
- * Hand-written types for shpjs 6.x.
- *
- * `@types/shpjs` (3.4.7) is NOT usable here: it declares a CommonJS `export =`
- * namespace modelled on shpjs 3/4, where `parseShp` / `parseDbf` / `combine` hang
- * off the callable default export. shpjs 6.2.0 is ESM and exports them as named
- * bindings, and it also accepts a `{ shp, dbf, cpg, prj }` object form that the
- * DefinitelyTyped package does not describe at all.
- *
- * Surface below mirrors shpjs@6.2.0/lib/index.js.
- */
 declare module 'shpjs' {
   import type {
     FeatureCollection,
@@ -16,7 +5,6 @@ declare module 'shpjs' {
     GeoJsonProperties,
   } from 'geojson';
 
-  /** Anything shpjs's toDataView/toUint8Array helpers accept. */
   type ShpBuffer = ArrayBuffer | ArrayBufferView | DataView;
 
   interface FeatureCollectionWithFilename extends FeatureCollection {
@@ -27,7 +15,6 @@ declare module 'shpjs' {
     | FeatureCollectionWithFilename
     | FeatureCollectionWithFilename[];
 
-  /** The `fromObject` form — parses loose parts in one call, honouring .cpg and .prj. */
   interface LooseParts {
     shp: ShpBuffer;
     dbf?: ShpBuffer;
@@ -35,10 +22,6 @@ declare module 'shpjs' {
     prj?: ShpBuffer | string;
   }
 
-  /**
-   * Default export (`getShapefile`). Accepts a zip buffer, a base URL/path, or a
-   * `{ shp, dbf, cpg, prj }` object.
-   */
   export default function shp(
     base: string | ShpBuffer | LooseParts,
     whiteList?: readonly string[],

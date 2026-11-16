@@ -17,7 +17,6 @@ const MEASURE_TOOLS: { id: MeasureTool; label: string }[] = [
   { id: 'location', label: 'LOCATION' },
 ];
 
-/** Basemap switcher, graticule toggle and north arrow, floating over the map. */
 export function MapChrome({
   basemap,
   graticule,
@@ -92,7 +91,6 @@ export function MapChrome({
             className="sv-m"
             title={'Measure ' + label.toLowerCase()}
             aria-pressed={measureTool === id}
-            // Clicking the active tool turns measuring off again.
             onClick={() => onMeasureTool(measureTool === id ? null : id)}
             style={{
               padding: '5px 9px',

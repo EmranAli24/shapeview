@@ -17,24 +17,16 @@ import type { Layer } from '../types';
 
 export type MeasureTool = 'distance' | 'area' | 'location';
 
-/** Above the layer panes (500+) and Leaflet's markerPane (600). */
 const PANE = 'sv-measure';
 const PANE_Z = '655';
 
-/**
- * Leaflet fires `click` before `dblclick`, so a vertex is held this long before being committed —
- * long enough for a double-click to cancel it and finish the shape instead.
- */
+// hold a click briefly so a double-click can finish the shape instead
 const CLICK_DELAY = 220;
 
 export interface MeasureResult {
-  /** Path length in metres — distance tool. */
   length?: number;
-  /** Enclosed area in m² — area tool. */
   area?: number;
-  /** Ring length in metres — area tool. */
   perimeter?: number;
-  /** The single picked point — location tool. */
   point?: Point;
 }
 
@@ -54,7 +46,6 @@ export interface UseMeasureResult {
 
 interface Draft {
   points: Point[];
-  /** A finished measurement stays on screen; the next click starts a fresh one. */
   finished: boolean;
 }
 
@@ -66,15 +57,12 @@ export function useMeasure(
   darkBasemap: boolean,
 ): UseMeasureResult {
   const [tool, setToolState] = useState<MeasureTool | null>(null);
-  // Vertices and their finished flag change together; splitting them would mean a nested state
-  // update, which React is free to run more than once.
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [live, setLive] = useState<Point | null>(null);
   const [lengthUnit, setLengthUnit] = useState('m');
   const [areaUnit, setAreaUnit] = useState('m2');
 
   const group = useRef<L.LayerGroup | null>(null);
-  /** Polyline or Polygon depending on the tool; only ever added and removed, never re-read. */
   const shape = useRef<L.Layer | null>(null);
   const rubber = useRef<L.Polyline | null>(null);
   const tip = useRef<L.Marker | null>(null);
@@ -83,15 +71,12 @@ export function useMeasure(
   const clickTimer = useRef<number | null>(null);
   const moveRaf = useRef<number | null>(null);
 
-  // Read inside Leaflet handlers, which are bound once per tool change.
   const draftRef = useRef(draft);
   draftRef.current = draft;
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
   const colors = darkBasemap ? MEASURE_COLORS.dark : MEASURE_COLORS.light;
-
-  /* ---------- actions ---------- */
 
   const setTool = useCallback((next: MeasureTool | null) => {
     setToolState(next);
@@ -108,12 +93,8 @@ export function useMeasure(
     setDraft((d) => ({ points: d.points.slice(0, -1), finished: false }));
   }, []);
 
-  /* ---------- results ---------- */
-
   const result = useMemo<MeasureResult>(() => {
     const { points, finished } = draft;
-    // While drawing, the cursor counts as a provisional last vertex — the reading tracks the
-    // rubber band rather than lagging a click behind it.
     const withLive = !finished && live ? [...points, live] : points;
 
     if (tool === 'location') return { point: points[0] };
@@ -126,8 +107,6 @@ export function useMeasure(
     }
     return {};
   }, [tool, draft, live]);
-
-  /* ---------- map interaction ---------- */
 
   useEffect(() => {
     if (!map || !tool) return;
@@ -158,8 +137,6 @@ export function useMeasure(
     };
 
     const onDblClick = (e: L.LeafletMouseEvent) => {
-      // The pending single click is cancelled, then re-placed here: double-clicking commits the
-      // final vertex as well as finishing, the way ArcGIS and Leaflet.Draw both behave.
       if (clickTimer.current !== null) {
         window.clearTimeout(clickTimer.current);
         clickTimer.current = null;
@@ -178,8 +155,6 @@ export function useMeasure(
 
     const onMove = (e: L.LeafletMouseEvent) => {
       if (draftRef.current.finished || toolRef.current === 'location') return;
-      // Pointer moves outrun React; coalesce them into one update per frame, as the cursor
-      // readout in useLeafletMap already does.
       if (moveRaf.current !== null) return;
       const latlng = e.latlng;
       moveRaf.current = requestAnimationFrame(() => {
@@ -228,28 +203,20 @@ export function useMeasure(
     };
   }, [map, tool]);
 
-  /**
-   * Feature layers stop click propagation so the map never hears it, which would swallow every
-   * vertex placed on top of a feature. Switching their panes off for pointer events lets the click
-   * fall through to the container instead — no change needed in useLayerSync.
-   *
-   * This MUST be undone on exit, or features silently stop being selectable. Keyed on `layers` so
-   * a layer loaded mid-measurement is covered too.
-   */
   useEffect(() => {
     if (!map) return;
     const panes = layers
       .map((l) => map.getPane('sv-' + l.id))
       .filter((p): p is HTMLElement => !!p);
 
+    // let clicks fall through feature layers while a tool is active
     for (const pane of panes) pane.style.pointerEvents = tool ? 'none' : '';
 
     return () => {
+      // restore feature clicks when the tool is turned off
       for (const pane of panes) pane.style.pointerEvents = '';
     };
   }, [map, tool, layers]);
-
-  /* ---------- graphics ---------- */
 
   useEffect(() => {
     if (!map) return;
@@ -269,13 +236,11 @@ export function useMeasure(
       shape.current = null;
       rubber.current = null;
       tip.current = null;
-      // Leaflet has no removePane(), so the element goes by hand — same as useLayerSync.
+      // remove the pane element by hand (no removePane in Leaflet)
       map.getPane(PANE)?.remove();
     };
   }, [map]);
 
-  // The committed shape and its vertex handles: rebuilt only when a vertex is added or removed,
-  // never on pointer movement.
   useEffect(() => {
     const parent = group.current;
     const vertexGroup = vertices.current;
@@ -328,8 +293,6 @@ export function useMeasure(
     });
   }, [map, tool, draft, colors]);
 
-  // The rubber band and the reading that follows the cursor — the only things that touch Leaflet
-  // on every frame.
   useEffect(() => {
     const parent = group.current;
     if (!map || !parent) return;
@@ -354,7 +317,6 @@ export function useMeasure(
       [from.lat, from.lng],
       [live!.lat, live!.lng],
     ];
-    // An area in progress also shows the segment that will close the ring.
     if (tool === 'area' && points.length >= 2) band.push([points[0].lat, points[0].lng]);
 
     if (rubber.current) {

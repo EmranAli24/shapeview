@@ -19,7 +19,6 @@ interface AttributeTableProps {
   onSelectRow: (fid: number) => void;
 }
 
-/** Sentinel column key for the row-number column, which is not a real attribute. */
 const ROW_NUMBER = '__n';
 
 export function AttributeTable(props: AttributeTableProps) {
