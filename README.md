@@ -102,8 +102,8 @@ public/sample/        bundled sample shapefile
 
 ## Team (Group 08)
 
-- Md. Abdullah Al Mamun Emon
 - Emran Ali
+- Md. Abdullah Al Mamun Emon
 - Saad Al Mahmud
 - Md Faysal Ahmed Fahim
 - Omar Faruk
